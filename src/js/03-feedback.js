@@ -1,54 +1,38 @@
-import throttle from 'lodash.throttle';
+import throttle  from 'lodash.throttle';
 
-
+const form = document.querySelector('.feedback-form');
 const STORAGE_KEY = `feedback-form-state`;
 
-const formData = {};
+form.addEventListener('input', throttle(onInput, 500));
+form.addEventListener('submit', onFormSubmit);
 
-const refs = {
-    form: document.querySelector(`.feedback-form`),
-    textarea: document.querySelector(`.feedback-form textarea`),
-    }
 
-refs.form.addEventListener(`submit`, onFormSubmit);
-refs.textarea.addEventListener(`input`, throttle(onTextareaInput, 500));
+lastFormInput(); 
 
-populateTextarea();
 
-refs.form.addEventListener(`input`, e => {
-    formData[e.target.name] = e.target.value;
-    console.log(formData);
-
-    localStorage.setItem(`formData`, JSON.stringify(formData));
-    
-    if (localStorage.getItem(`STORAGE_KEY`)) {
-    formData = JSON.parse(localStorage.getItem(`STORAGE_KEY`));
+function onInput(evt) {
+  let inputSavedData = localStorage.getItem(STORAGE_KEY);
+  inputSavedData = inputSavedData ? JSON.parse(inputSavedData) : {};
+  inputSavedData[evt.target.name] = evt.target.value; 
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(inputSavedData)); 
 }
-})
-
-
-
-function onTextareaInput (evt) {
-    const massage = evt.target.value;
-
-    localStorage.setItem(STORAGE_KEY, massage);
-}
-
-
 
 function onFormSubmit(evt) {
-    evt.preventDefault();
+  evt.preventDefault();
+  const formData = new FormData(form);
+  formData.forEach((value, name) => console.log(name, value));
 
-    evt.currentTarget.reset();
-
-    localStorage.removeItem(STORAGE_KEY);
+  evt.currentTarget.reset();
+  localStorage.removeItem(STORAGE_KEY);
 }
 
-function populateTextarea(evt) {
-    const saveMessage = localStorage.getItem(STORAGE_KEY);
-
-    if (saveMessage) {
-        console.log(saveMessage);
-        refs.textarea.value = saveMessage;
-    }
+function lastFormInput() {
+  let inputSavedData = localStorage.getItem(STORAGE_KEY);
+  if (inputSavedData) {
+    inputSavedData = JSON.parse(inputSavedData);
+    Object.entries(inputSavedData).forEach(([name, value]) => {
+      form.elements[name].value = value;
+    });
+  }
 }
+
